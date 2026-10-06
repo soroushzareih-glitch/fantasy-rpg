@@ -30,15 +30,7 @@ jobs:
             echo "export/android/debug_keystore_user = \"androiddebugkey\""
             echo "export/android/debug_keystore_pass = \"android\""
           } >> "$F"
-          echo "=== DIAG ==="
-          echo "HOME=$HOME GODOT_VERSION=$GODOT_VERSION"
-          echo "JAVA=$JAVA SDK=$SDK"
-          ls -la ~/.local/share/godot/export_templates/*/ | head -40
-          ls "$SDK" || true
-          ls "$SDK/build-tools" "$SDK/platforms" || true
-          ls -la ~/debug.keystore
-          cat "$F"
-          echo "=== END DIAG ==="
+          grep export/android "$F"
 
       - name: Find project
         run: |
@@ -46,6 +38,8 @@ jobs:
           PROJ=$(dirname "$(find . -name project.godot -not -path './.git/*' | head -1)")
           echo "PROJ=$PROJ" >> $GITHUB_ENV
           sed -i 's/var local := make_input_local(event).position/var local: Vector2 = make_input_local(event).position/' "$PROJ/ui/virtual_joystick.gd"
+          sed -i '/^\[rendering\]/a textures/vram_compression/import_etc2_astc=true' "$PROJ/project.godot"
+          grep -n -A3 "rendering" "$PROJ/project.godot"
 
       - name: Export preset
         run: |
@@ -90,9 +84,8 @@ jobs:
           cd "$PROJ"
           godot --headless --import || true
           godot --headless --import || true
-          godot --headless --export-debug "Android" "$GITHUB_WORKSPACE/out/FantasyRPG.apk" 2>&1 | cat -A | grep -v "^\$$" | tail -40
+          godot --headless --export-debug "Android" "$GITHUB_WORKSPACE/out/FantasyRPG.apk"
           ls -la "$GITHUB_WORKSPACE/out"
-          test -f "$GITHUB_WORKSPACE/out/FantasyRPG.apk"
 
       - uses: actions/upload-artifact@v4
         with:

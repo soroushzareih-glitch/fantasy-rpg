@@ -17,12 +17,19 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates ~/.config/godot
           cp -r /root/.local/share/godot/export_templates/. ~/.local/share/godot/export_templates/
           cp -r /root/.config/godot/. ~/.config/godot/
+          JAVA=$(dirname "$(dirname "$(readlink -f "$(which java)")")")
+          echo "Java: $JAVA"
+          F=~/.config/godot/editor_settings-4.tres
+          sed -i '/export\/android\/java_sdk_path/d' "$F"
+          echo "export/android/java_sdk_path = \"$JAVA\"" >> "$F"
+          grep android "$F" || true
 
       - name: Find project
         run: |
           for z in *.zip; do [ -f "$z" ] && unzip -oq "$z" -d game; done
           PROJ=$(dirname "$(find . -name project.godot -not -path './.git/*' | head -1)")
           echo "PROJ=$PROJ" >> $GITHUB_ENV
+          sed -i 's/var local := make_input_local(event).position/var local: Vector2 = make_input_local(event).position/' "$PROJ/ui/virtual_joystick.gd"
 
       - name: Export preset
         run: |
@@ -59,6 +66,7 @@ jobs:
         run: |
           mkdir -p out
           cd "$PROJ"
+          godot --headless --import || true
           godot --headless --import || true
           godot --headless --export-debug "Android" "$GITHUB_WORKSPACE/out/FantasyRPG.apk"
           ls -la "$GITHUB_WORKSPACE/out"

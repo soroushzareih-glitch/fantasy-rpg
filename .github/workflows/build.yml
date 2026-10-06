@@ -17,11 +17,23 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates ~/.config/godot
           cp -r /root/.local/share/godot/export_templates/. ~/.local/share/godot/export_templates/
           cp -r /root/.config/godot/. ~/.config/godot/
+          ls ~/.local/share/godot/export_templates/*
           JAVA=$(dirname "$(dirname "$(readlink -f "$(which java)")")")
-          echo "Java: $JAVA"
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          echo "JAVA=$JAVA"
+          echo "SDK=$SDK"
+          ls "$SDK" "$SDK/build-tools" "$SDK/platforms" || true
+          keytool -genkey -v -keystore ~/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
           F=~/.config/godot/editor_settings-4.tres
-          sed -i '/export\/android\/java_sdk_path/d' "$F"
+          sed -i '/export\/android\/java_sdk_path/d;/export\/android\/debug_keystore/d' "$F"
           echo "export/android/java_sdk_path = \"$JAVA\"" >> "$F"
+          echo "export/android/debug_keystore = \"$HOME/debug.keystore\"" >> "$F"
+          echo "export/android/debug_keystore_user = \"androiddebugkey\"" >> "$F"
+          echo "export/android/debug_keystore_pass = \"android\"" >> "$F"
+          if [ -n "$SDK" ]; then
+            sed -i '/export\/android\/android_sdk_path/d' "$F"
+            echo "export/android/android_sdk_path = \"$SDK\"" >> "$F"
+          fi
           grep android "$F" || true
 
       - name: Find project
@@ -53,6 +65,9 @@ jobs:
           architectures/arm64-v8a=true
           architectures/x86=false
           architectures/x86_64=false
+          keystore/debug=""
+          keystore/debug_user=""
+          keystore/debug_password=""
           version/code=1
           version/name="0.1"
           package/unique_name="com.example.fantasyrpg"
@@ -68,7 +83,7 @@ jobs:
           cd "$PROJ"
           godot --headless --import || true
           godot --headless --import || true
-          godot --headless --export-debug "Android" "$GITHUB_WORKSPACE/out/FantasyRPG.apk"
+          godot --headless --verbose --export-debug "Android" "$GITHUB_WORKSPACE/out/FantasyRPG.apk"
           ls -la "$GITHUB_WORKSPACE/out"
 
       - uses: actions/upload-artifact@v4

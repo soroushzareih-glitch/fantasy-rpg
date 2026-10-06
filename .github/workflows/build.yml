@@ -15,8 +15,8 @@ jobs:
       - name: Setup Godot
         run: |
           mkdir -p ~/.local/share/godot/export_templates ~/.config/godot
-          cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/
-          cp /root/.config/godot/editor_settings-4.tres ~/.config/godot/
+          cp -r /root/.local/share/godot/export_templates/. ~/.local/share/godot/export_templates/
+          cp -r /root/.config/godot/. ~/.config/godot/
 
       - name: Find project
         run: |
